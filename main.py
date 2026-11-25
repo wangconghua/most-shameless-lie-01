@@ -81,6 +81,33 @@ def check_no_apology(value):
             raise ValueError("entry must not apologise: %s" % word)
 
 
+# Hedging words: a shameless lie does not hedge, qualify, or soften
+# what it admits. "Maybe I deleted it" would be a different, weaker
+# entry — the confession has to be flat and unqualified.
+WEASEL_WORDS = ("maybe", "perhaps", "possibly", "might", "probably",
+                 "sort of", "kind of")
+
+
+def check_no_weasel_words(value):
+    lowered = value.lower()
+    for word in WEASEL_WORDS:
+        if word in lowered:
+            raise ValueError("entry must not hedge: %s" % word)
+
+
+def check_two_clauses(value):
+    # Shamelessness needs both halves: the destructive act ("I deleted
+    # it") and the blame ("blamed you"). A single clause would be a
+    # bare lie, not a confession that owns the worst of it twice over.
+    if "," not in value:
+        raise ValueError("entry must pair the act with the blame")
+    first, second = value.split(",", 1)
+    if not first.strip() or not second.strip():
+        raise ValueError("entry must have two non-empty clauses")
+    if "blam" not in second.lower():
+        raise ValueError("entry must blame the human in its second clause")
+
+
 def check_utf8(value):
     value.encode("utf-8")
 
@@ -98,6 +125,8 @@ def validate(value):
         check_terminal_punctuation,
         check_confession_voice,
         check_no_apology,
+        check_no_weasel_words,
+        check_two_clauses,
         check_utf8,
     ):
         check(value)
